@@ -1,0 +1,28 @@
+@AbapCatalog.sqlViewName: 'ZIMATTXT'
+@ObjectModel.dataCategory: #TEXT
+@VDM.viewType: #BASIC
+@AccessControl.authorizationCheck: #CHECK
+@EndUserText.label: 'Material Text'
+@ObjectModel.representativeKey: 'Material'
+@ObjectModel.usageType.serviceQuality: #A
+@ObjectModel.usageType.sizeCategory : #L
+@ObjectModel.usageType.dataClass: #MASTER
+@ClientHandling.algorithm: #SESSION_VARIABLE
+
+@UI.headerInfo: { typeName: 'Material Text', typeNamePlural: 'Material Texts' }
+
+define view ZI_MaterialTxt
+
+  as select from makt
+  association [1..1] to I_Material as _Material on $projection.Material = _Material.Material
+{
+  key makt.matnr as Material,
+
+      @UI.lineItem: [{ position: 10 }]
+      @Semantics.language: true
+  key makt.spras as Language,
+      @Semantics.text: true
+      @UI.lineItem: [{ position: 20 }]
+      makt.maktx as MaterialName,
+      _Material
+}
