@@ -1,0 +1,48 @@
+@AbapCatalog.sqlViewName: 'ZIMATSTLSTK'
+@AbapCatalog.compiler.compareFilter: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Material Storage Location Stock'
+
+@UI.chart: [
+   {
+      qualifier: 'Default',
+      chartType: #COLUMN,
+      dimensions: ['StorageLoc'],
+      dimensionAttributes: [{ dimension: 'StorageLoc' , role: #CATEGORY  }] ,
+      measures: ['Unrestricted'],
+      measureAttributes: [{ measure: 'Unrestricted' , role: #AXIS_1 }]
+   }
+]
+
+@UI.presentationVariant: [
+  {
+    sortOrder: [ { by: 'StorageLoc',  direction: #ASC } ],
+    visualizations: [ { type: #AS_CHART,    qualifier: 'Default' } ],
+     requestAtLeast:[ 'StorageLoc', 'Unrestricted'   ]
+  }
+  ]
+
+define view ZI_MaterialStLocStock
+  as select from nsdm_e_mard
+    inner join   mara on nsdm_e_mard.matnr = mara.matnr
+
+  association [1] to I_StorageLocation as _StorageLocation on  $projection.Plant      = _StorageLocation.Plant
+                                                           and $projection.StorageLoc = _StorageLocation.StorageLocation
+{
+  key nsdm_e_mard.matnr       as Material,
+  key nsdm_e_mard.werks       as Plant,
+
+      @UI.lineItem: [{ position: 10 }]
+  key nsdm_e_mard.lgort       as StorageLoc,
+
+      @UI.lineItem: [{ position: 15 }]
+      _StorageLocation.StorageLocationName,
+
+      @UI.lineItem: [{ position: 20 }]
+      @Semantics.quantity: { unitOfMeasure: 'BaseUnitofMeasure' }
+      nsdm_e_mard.labst       as Unrestricted,
+
+      @Semantics.unitOfMeasure: true
+      @UI.lineItem: [{ position: 30 }]
+      mara.meins              as BaseUnitofMeasure
+}
