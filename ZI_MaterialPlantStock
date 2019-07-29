@@ -1,0 +1,21 @@
+@AbapCatalog.sqlViewName: 'ZIMATPLANTSTK'
+@AbapCatalog.compiler.compareFilter: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Material Plant Stock'
+
+@ObjectModel.usageType.dataClass: #MASTER
+@ObjectModel.usageType.serviceQuality: #A
+@ObjectModel.usageType.sizeCategory: #S
+@ClientHandling.algorithm: #SESSION_VARIABLE
+
+define view ZI_MaterialPlantStock
+  as select from nsdm_e_mard as MaterialStLoc
+{
+
+  key MaterialStLoc.matnr           as Material,
+  key MaterialStLoc.werks           as Plant,
+      sum(    MaterialStLoc.labst ) as UnrestricedStock
+}
+group by
+  MaterialStLoc.matnr,
+  MaterialStLoc.werks
