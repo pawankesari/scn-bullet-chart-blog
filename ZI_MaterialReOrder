@@ -1,0 +1,86 @@
+@AbapCatalog.sqlViewName: 'ZIMATREORDER'
+@AbapCatalog.compiler.compareFilter: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Material Reorder'
+
+@ObjectModel.usageType.dataClass: #MASTER
+@ObjectModel.usageType.serviceQuality: #A
+@ObjectModel.usageType.sizeCategory: #S
+@ClientHandling.algorithm: #SESSION_VARIABLE
+
+@Metadata.allowExtensions: true
+@Search.searchable: true
+
+define view ZI_MaterialReOrder
+  as select from marc
+    inner join   mara on marc.matnr = mara.matnr
+  association [0..1] to ZI_MaterialPlantStock      as _MaterialPlantStock       on  $projection.Material = _MaterialPlantStock.Material
+                                                                                and $projection.Plant    = _MaterialPlantStock.Plant
+  association [0..1] to I_Material                 as _Material                 on  $projection.Material = _Material.Material
+  association [0..*] to ZI_MaterialTxt             as _MaterialText             on  $projection.Material = _MaterialText.Material
+  association [1..1] to C_PlantVH                  as _PlantVH                  on  $projection.Plant = _PlantVH.Plant
+  association [1..1] to C_PurchasingGroupValueHelp as _PurchasingGroupValueHelp on  $projection.PurchasingGroup = _PurchasingGroupValueHelp.PurchasingGroup
+  association [1..1] to I_MaterialType             as _MaterialTypeVH           on  $projection.MaterialType = _MaterialTypeVH.MaterialType
+  association [0..1] to C_MRPTypeVH                as _MRPTypeVH                on  $projection.MRPType = _MRPTypeVH.MRPType
+  association [1..1] to I_ProductMRPControllerVH   as _MRPControllerVH          on  $projection.MRPController = _MRPControllerVH.MRPController
+                                                                                and $projection.Plant         = _MRPControllerVH.Plant
+  association [0..*] to ZI_MaterialStLocStock      as _MaterialStLocStock       on  $projection.Material = _MaterialStLocStock.Material
+                                                                                and $projection.Plant    = _MaterialStLocStock.Plant
+{
+
+      @Search: { ranking: #HIGH, fuzzinessThreshold: 0.8 }
+      @Consumption: { valueHelp: '_PlantVH' }
+  key marc.werks                                                                                                  as Plant,
+
+      @Search: {defaultSearchElement: true , ranking: #HIGH, fuzzinessThreshold: 0.8 }
+      @Consumption: { valueHelp: '_Material' }
+      @Consumption.semanticObject: 'Material'
+  key marc.matnr                                                                                                  as Material,
+
+      _MaterialText[ Language = $session.system_language ].MaterialName,
+
+      @Consumption: { valueHelp: '_PlantVH' }
+      marc.ekgrp                                                                                                  as PurchasingGroup,
+
+      @Consumption: { valueHelp: '_MaterialTypeVH' }
+      mara.mtart                                                                                                  as MaterialType,
+
+      @Consumption: { valueHelp: '_MRPTypeVH' }
+      marc.dismm                                                                                                  as MRPType,
+
+      @Consumption: { valueHelp: '_MRPControllerVH' }
+      marc.dispo                                                                                                  as MRPController,
+
+      @Semantics.unitOfMeasure: true
+      mara.meins                                                                                                  as MaterialUnitofMeasure,
+
+      @Semantics.quantity.unitOfMeasure: 'MaterialUnitofMeasure'
+      marc.minbe                                                                                                  as ReOrderPoint,
+
+      @Semantics.quantity.unitOfMeasure: 'MaterialUnitofMeasure'
+      _MaterialPlantStock.UnrestricedStock,
+
+      @Semantics.quantity.unitOfMeasure: 'MaterialUnitofMeasure'
+      _MaterialPlantStock.UnrestricedStock                                                                        as UnresforDisplay,
+
+      cast (case when _MaterialPlantStock.UnrestricedStock < marc.minbe then 'X'
+      else ''
+      end  as boolean )                                                                                           as IsBelowReorder,
+
+      cast( marc.minbe as abap.fltp) * 1.5                                                                        as WarningThresHold,
+
+      //Association
+      @ObjectModel.association.type: [#TO_COMPOSITION_CHILD ]
+      _MaterialText,
+      _Material,
+      _PlantVH,
+      _PurchasingGroupValueHelp,
+      _MaterialTypeVH,
+      _MRPTypeVH,
+      _MRPControllerVH,
+      @ObjectModel.association.type: [#TO_COMPOSITION_CHILD ]
+      _MaterialStLocStock
+
+}
+where
+  marc.minbe > 0
