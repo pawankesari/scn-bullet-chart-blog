@@ -1,0 +1,127 @@
+@Metadata.layer: #CORE
+
+@UI.headerInfo: { typeName: 'Plant/Material' ,
+                  typeNamePlural: 'Plant/Material' }
+
+@UI.presentationVariant: [
+  {
+    sortOrder: [
+      { by: 'Plant', direction: #ASC },
+      { by: 'Material', direction: #ASC }
+    ],
+    requestAtLeast:[
+      'Plant',
+      'Material'   ]
+   } ]
+
+@UI.chart: [{
+              chartType:         #BULLET ,
+              measures:          ['UnresforDisplay'],
+              measureAttributes: [{
+                    measure:     'UnresforDisplay' ,
+                    role:        #AXIS_1 ,
+                    asDataPoint: true
+                    }]
+              }]
+
+annotate view ZI_MaterialReOrder with
+{
+
+  @UI.facet: [
+        {
+          type: #COLLECTION ,
+          id: 'GeneralInformation' ,
+          label: 'General Information',
+          purpose: #STANDARD,
+          position: 10
+        },
+        {
+            label: 'Product Information',
+            id: 'idProductInfo',
+            purpose: #STANDARD ,
+            parentId: 'GeneralInformation' ,
+            type: #IDENTIFICATION_REFERENCE   ,
+            position: 20,
+            importance: #HIGH
+        },
+        {
+            label: 'Stock Figures',
+            id: 'idStockFig',
+            purpose: #STANDARD,
+            parentId: 'GeneralInformation' ,
+            type: #FIELDGROUP_REFERENCE   ,
+            targetQualifier: 'FigureInfo',
+            position: 30,
+            importance: #HIGH
+        },
+  //        {
+  //          label: 'Stock Storage Loc(Chart)',
+  //          id : 'idStLocChart',
+  //          purpose: #STANDARD,
+  //          type: #CHART_REFERENCE,
+  //          targetElement: '_MaterialStLocStock',
+  //          targetQualifier: 'Default',
+  //          position: 35,
+  //          importance: #HIGH
+  //        },
+        {
+            label: 'Stock Storage Loc',
+            id: 'idStLocStock',
+            purpose: #STANDARD,
+            type: #LINEITEM_REFERENCE ,
+            targetElement: '_MaterialStLocStock' ,
+            position: 40,
+            importance: #HIGH
+        },
+        {
+            label: 'Material Text',
+            id: 'idMatText',
+            purpose: #STANDARD,
+            type: #LINEITEM_REFERENCE ,
+            targetElement: '_MaterialText' ,
+            position: 50,
+            importance: #HIGH
+        }]
+
+  @UI: {  selectionField: [{ position: 10 }] , lineItem: [{ position: 10 }] }
+  @UI.dataPoint: { title: 'Plant'  }
+  Plant;
+
+  @UI: { selectionField: [{ position: 20 }] ,
+         lineItem: [{ position: 20 ,
+                      type: #WITH_INTENT_BASED_NAVIGATION ,
+                      semanticObjectAction: 'changemrp'}]  }
+  @UI.dataPoint: { title: 'Material'  }
+  Material;
+
+  @UI: { selectionField: [{ position: 25 }] , lineItem: [{ position: 25 }]  }
+  MaterialName;
+
+  @UI: { selectionField: [{ position: 40 }] , lineItem: [{ position: 40 }]}
+  MaterialType;
+
+  @UI: { selectionField: [{ position: 60 }] , lineItem: [{ position: 60 }] , identification: [{ position: 40 }]}
+  MRPController;
+
+  @UI: { lineItem: [{ position: 80 }] }
+  @UI.fieldGroup: [{ qualifier: 'FigureInfo' , position: 20 }]
+  ReOrderPoint;
+
+  @UI: { lineItem: [{ position: 90 }] }
+  @UI.fieldGroup: [{ qualifier: 'FigureInfo' , position: 10 }]
+  UnrestricedStock;
+
+  @UI:{ lineItem: [{ position: 100 , type: #AS_CHART, label: 'Stock Level'   } ]   }
+  @UI.dataPoint: { title: 'Unrestricted Stock' ,
+                   targetValueElement: 'ReOrderPoint' ,
+                   minimumValue: 0 ,
+                   maximumValue: 2500 ,
+                   criticalityCalculation: {
+                                improvementDirection:  #MAXIMIZE ,
+                                deviationRangeLowValueElement: 'ReOrderPoint' ,
+                                toleranceRangeLowValueElement: 'WarningThresHold'
+                        }
+                  }
+  UnresforDisplay;
+
+}
